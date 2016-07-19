@@ -1,7 +1,12 @@
 @import '../../bower_components/normalize-css/normalize.css';
 
+/* Import base */
 @import 'base/variables';
 @import 'base/global';
 
+/* Import components */
 @import 'components/header';
 @import 'components/footer';
+
+/* Import layouts */
+@import 'layouts/index';
