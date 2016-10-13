@@ -11,7 +11,6 @@ const rename      = require('gulp-rename');
 const rimraf      = require('rimraf');
 const importcss   = require('gulp-import-css');
 const babel       = require('gulp-babel');
-const imagemin    = require('gulp-imagemin');
 const path        = require('path');
 
 /* Define custom error handler in order to prevent watcher from crashing */
@@ -23,7 +22,7 @@ const plumberOptions = {
 }
 
 /* Serve dest directory with browsersync */
-gulp.task('serve', ['sass', 'html', 'js', 'js.vendor', 'fonts', 'images'], () => {
+gulp.task('serve', ['sass', 'css.vendor', 'html', 'js', 'js.vendor', 'fonts', 'images'], () => {
     browserSync.init({
         server: {
             baseDir: './dest'
@@ -35,9 +34,25 @@ gulp.task('sass', () => {
     return gulp.src('src/css/*.scss')
         .pipe(plumber(plumberOptions))
         .pipe(sass())
-        .pipe(prefixer())
+        .pipe(prefixer({
+            browsers: [
+                'IE 8', 'IE 9', 'last 10 version', '> 5%', 'iOS 7'],
+            cascade:  false
+        }))
         .pipe(importcss())
         .pipe(gulp.dest('dest/css'))
+        .pipe(cleancss())
+        .pipe(rename({suffix: '.min'}))
+        .pipe(gulp.dest('dest/css'))
+        .pipe(plumber.stop())
+        .pipe(browserSync.stream());
+});
+
+gulp.task('css.vendor', () => {
+    return gulp.src('src/css/vendor/*.scss')
+        .pipe(plumber(plumberOptions))
+        .pipe(sass())
+        .pipe(importcss())
         .pipe(cleancss())
         .pipe(rename({suffix: '.min'}))
         .pipe(gulp.dest('dest/css'))
@@ -84,7 +99,6 @@ gulp.task('fonts', () => {
 gulp.task('images', () => {
     gulp.src('src/images/**/*.*')
         .pipe(plumber(plumberOptions))
-        .pipe(imagemin())
         .pipe(plumber.stop())
         .pipe(gulp.dest('dest/images'))
 });
@@ -96,11 +110,12 @@ gulp.task('clean', (cb) => {
 
 /* Init watcher */
 gulp.task('watch', () => {
-    watch('src/css/**/*.scss',  () => {gulp.start('sass');});
-    watch('src/html/**/*.html', () => {gulp.start('html-watch');});
-    watch('src/js/**/*.js',     () => {gulp.start('js-watch');});
-    watch('src/fonts/**/*',     () => {gulp.start('fonts-watch');});
-    watch('src/images/**/*',    () => {gulp.start('images-watch');});
+    watch('src/css/vendor/*.scss',  () => {gulp.start('css.vendor');})
+    watch('src/css/**/*.scss',      () => {gulp.start('sass');});
+    watch('src/html/**/*.html',     () => {gulp.start('html-watch');});
+    watch('src/js/**/*.js',         () => {gulp.start('js-watch');});
+    watch('src/fonts/**/*',         () => {gulp.start('fonts-watch');});
+    watch('src/images/**/*',        () => {gulp.start('images-watch');});
 });
 
 /* Watch tasks */
